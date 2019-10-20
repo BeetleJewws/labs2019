@@ -1,6 +1,8 @@
-(ns labi.lab2
-  (:import (java.util.logging XMLFormatter)))
+(ns labi.lab2)
 
+(defn myFn
+  [x]
+  (* x x))
 
 (defn check-step
   [start, finish, step]
@@ -13,19 +15,13 @@
 (def core
   (memoize
     (fn [fun, step, start, finish]
-      (println start, finish)
+      (print ".")
       (if (= start finish)
         0
         (+ (calc (- finish step) finish fun)
-        (core fun step start (- finish (check-step start finish step))))
-        ))))
+        (core fun step start (- finish (check-step start finish step))))))))
 
 
 
-
-(println (core (fn [el] (* el el)) 1. 0. 10.))
-(println (core (fn [el] (* el el)) 1. 0. 10.))
-
-
-
-
+(println (core myFn 1. 0. 3.))
+(println (core myFn 1. 0. 3.))
