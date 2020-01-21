@@ -88,7 +88,8 @@ class master:
                 return new_generator
             else:
                 generator = self.generators.get(tuple([transducer, reducer]))
-                generator.set_target(target)
+                if target is not None:
+                    generator.set_target(target)
                 return generator
         else:
             if action is not None:
@@ -98,11 +99,13 @@ class master:
                     return new_generator
                 else:
                     generator = self.generators.get(tuple([action]))
-                    generator.set_target(target)
+                    if target is not None:
+                        generator.set_target(target)
                     return generator
 
-    def solve(self, transducers=None, actions=None, target=None, reducer=T.get_mutable_appender()):
+    def solve(self, transducers=None, actions=None, generators=None, target=None, reducer=T.get_mutable_appender()):
         current_target = target
+
         for action in reversed(actions):
             a = self.create_generator(
                 target=current_target, action=action, data=action.__name__)
@@ -110,8 +113,12 @@ class master:
 
         for transducer in reversed(transducers):
             a = self.create_generator(
-                target=current_target, transducer=transducer, reducer=reducer, data="Transducer")
+                target=current_target, transducer=transducer, reducer=reducer, data=transducer.__name__)
             current_target = a.get()
+
+        for generator in reversed(generators):
+            generator.set_target(current_target)
+            current_target = generator.get()
 
         return current_target
 
@@ -183,15 +190,22 @@ def test2(data):
     return data
 
 
+def test_generator(data):
+    # Any actions
+    return data
+
+
 master = master()
 output_sink = output()
 
 
+generator1 = master.create_generator(
+    action=test_generator, data='Generator_test')
 transducer2 = T.compose(T.mapping(lambda x: x), T.filtering(is_prime))
 transducer1 = T.compose(T.mapping(lambda x: x+1),
                         T.filtering(lambda x: True if x > 1 else False))
 
-chain = master.solve(transducers=[transducer1, transducer2], actions=[
+chain = master.solve(generators=[generator1], transducers=[transducer1, transducer2], actions=[
                      test1, test2], target=output_sink)
 
 input(iterable=range(15), target=chain)
